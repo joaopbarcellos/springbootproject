@@ -3,7 +3,9 @@ package com.example.demo;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -14,18 +16,23 @@ public class UserController {
 		SpringApplication.run(UserController.class, args);
 	}
 
-	@GetMapping(value = "/")
+	@GetMapping("/")
 	public String hello() {
 		return "Hello World";
 	}
 
-	@PostMapping(value = "/post")
-	public String post(){
-		return "Post";
+	@PostMapping("/UserManagement/rest/UserService/users")
+	public String post(@RequestBody User user){
+		return "Post: " + user.getId();
 	}
 
-	@GetMapping(value = "/teste")
+	@GetMapping("/UserManagement/rest/UserService/users")
 	public String Teste() {
+		return "Teste";
+	}
+
+	@GetMapping("/UserManagement/rest/UserService/users/{id}")
+	public String getUserByID(@PathVariable("id") Long id) {
 		return "Teste";
 	}
 }
