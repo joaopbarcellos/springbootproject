@@ -1,9 +1,27 @@
 package com.example.demo;
 
-public class User {
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+public class User implements UserDetails {
     protected String login, nome, senha;
     protected Long id;
 
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<String> roles;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return roles.stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                .collect(Collectors.toList());
+    }
     public Long getId(){
         return id;
     }
