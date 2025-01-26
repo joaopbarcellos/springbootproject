@@ -4,10 +4,7 @@ import java.util.Collection;
 import java.util.List;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.Getter;
+import lombok.*;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,9 +19,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Setter
     private String id;
+    @Setter
+    @Getter
     private String login;
     @Getter
+    @Setter
     private String name;
     private String password;
     private UserRole role;
@@ -34,6 +35,11 @@ public class User implements UserDetails {
         this.name = name;
         this.password = password;
         this.role = role;
+    }
+
+    public User(UserRequestDTO data) {
+        this.login = data.login();
+        this.name = data.name();
     }
 
     @Override
@@ -65,5 +71,9 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }

@@ -12,12 +12,30 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_JPA_SHOW_SQL: "true"
+      API_SECURITY_TOKEN_SECRET: ${JWT_SECRET:-my-secret-key}
+    depends_on:
+      - db
     networks:
       - app_network
+
+  db:
+    image: postgres:15.10
+    container_name: ${DB_CONTAINER_NAME}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "${DB_PORT}:5432"
+    networks:
+      - app_network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
 networks:
   app_network:
     driver: bridge
 
+volumes:
+  postgres_data:
+    driver: local

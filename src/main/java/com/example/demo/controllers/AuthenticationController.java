@@ -28,7 +28,7 @@ public class AuthenticationController {
     private TokenService tokenService;
 
     @PostMapping("/login")
-    public ResponseEntity login(@RequestBody @Valid AuthenticationDTO data){
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody @Valid AuthenticationDTO data){
         var usernamePassword = new UsernamePasswordAuthenticationToken(data.login(), data.password());
         var auth = this.authenticationManager.authenticate(usernamePassword);
 
@@ -38,7 +38,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity register(@RequestBody @Valid RegisterDTO data){
+    public ResponseEntity<String> register(@RequestBody @Valid RegisterDTO data){
         if(this.repository.findByLogin(data.login()) != null) return ResponseEntity.badRequest().build();
 
         String encryptedPassword = new BCryptPasswordEncoder().encode(data.password());
@@ -46,6 +46,6 @@ public class AuthenticationController {
 
         this.repository.save(newUser);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("Usuário cadastrado com sucesso");
     }
 }

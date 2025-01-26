@@ -1,21 +1,16 @@
 package com.example.demo.controllers;
 
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.List;
 
 import com.example.demo.domain.User;
+import com.example.demo.domain.UserRequestDTO;
 import com.example.demo.repositories.UserRepository;
-import org.apache.coyote.Response;
-import org.json.JSONObject;
-import org.json.JSONTokener;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,68 +21,62 @@ import com.example.demo.domain.UserResponseDTO;
 @RequestMapping("/api")
 public class UserController {
 
-	public JSONObject users = new JSONObject();
+	final
+	UserRepository repository;
 
 	@Autowired
-	UserRepository repository;
-//	public UserController() {
-//		readJson();
-//	}
-
-	public void writeJson() {
-		try (FileWriter fw = new FileWriter("Users.json")){
-			fw.write(this.users.toString());
-        } catch (IOException e) {
-			System.err.println("Erro ao escrever no arquivo.");
-		}
-	}
-
-	public final void readJson() {
-		try (FileReader fr = new FileReader("Users.json")) {
-			this.users = new JSONObject(new JSONTokener(fr));
-		} catch (IOException e) {
-			this.users = new JSONObject();
-		}
-	}
-
-	@PostMapping("/UserService/users")
-	public String postUser(@RequestBody User user){
-		if (this.users.has(user.getId())){
-			return "Erro: usuário já cadastrado.";
-		}
-		JSONObject user_json = new JSONObject();
-		user_json.put("login", user.getLogin());
-		this.users.put(user.getId(), user_json);
-		writeJson();
-		return "Usuário cadastrado com sucesso.";
+	public UserController(UserRepository repository) {
+		this.repository = repository;
 	}
 
 	@GetMapping("/UserService/users")
-	public ResponseEntity getAllUsers() {
-		List<UserResponseDTO> userList = this.repository.findAll().stream().map(UserResponseDTO::new).toList();
+	public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
+		List<UserResponseDTO> userList = repository.findAll().stream().map(UserResponseDTO::new).toList();
 
 		return ResponseEntity.ok(userList);
 	}
 
 	@GetMapping("/UserService/users/{id}")
-	public ResponseEntity getUserByID(@PathVariable("id") String id) {
-		UserResponseDTO user = this.repository.findById(id).stream().map(UserResponseDTO::new).findFirst().get();
+	public ResponseEntity<?> getUserByID(@PathVariable("id") String id) {
+		if (id == null || id.trim().isEmpty()) {
+			return ResponseEntity.badRequest().body("Erro: O ID fornecido é inválido.");
+		}
+		UserResponseDTO user = repository.findById(id).stream().map(UserResponseDTO::new).findFirst().get();
 		return ResponseEntity.ok(user);
 	}
 
 	@PutMapping("/UserService/users/{id}")
-	public String putUser(@PathVariable("id") Long id, @RequestBody User user) {
-		JSONObject user_json = new JSONObject();
-		user_json.put("login", user.getLogin());
-		this.users.put(Long.toString(id), user_json);
-		writeJson();
-		return "Usuário atualizado com sucesso.";
+	public ResponseEntity<String> putUser(@PathVariable("id") String id, @RequestBody @Valid UserRequestDTO body) {
+		if (!repository.existsById(id)) {
+			return ResponseEntity.status(404).body("Erro: Usuário não encontrado.");
+		}
+
+		User user = new User(body);
+		if (user.getLogin() == null || user.getLogin().trim().isEmpty()) {
+			return ResponseEntity.badRequest().body("Erro: Login deve ser informado");
+		}
+
+		if (user.getName() == null || user.getName().trim().isEmpty()) {
+			return ResponseEntity.badRequest().body("Erro: Nome deve ser informado");
+		}
+
+		User existingUser = repository.findById(id).orElseThrow();
+
+		existingUser.setLogin(user.getLogin());
+		existingUser.setName(user.getName());
+		repository.save(existingUser);
+
+		// Lembrar de fazer uma nova requisição de Login
+		return ResponseEntity.ok("Usuário atualizado com sucesso.");
 	}
 
 	@DeleteMapping("/UserService/users/{id}")
-	public String deleteUser(@PathVariable("id") Long id) {
-		this.users.remove(Long.toString(id));
-		writeJson();
-		return "Usuário removido com sucesso.";
+	public ResponseEntity<String> deleteUser(@PathVariable("id") String id) {
+		if (id == null || id.trim().isEmpty()) {
+			return ResponseEntity.badRequest().body("Erro: Id deve ser informado.");
+		}
+
+		repository.deleteById(id);
+		return ResponseEntity.ok("Usuário deletado com sucesso.");
 	}
 }
