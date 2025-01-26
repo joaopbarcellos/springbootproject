@@ -1,13 +1,17 @@
-package com.example.demo;
+package com.example.demo.controllers;
 
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
 
+import com.example.demo.domain.User;
+import com.example.demo.repositories.UserRepository;
+import org.apache.coyote.Response;
 import org.json.JSONObject;
 import org.json.JSONTokener;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,27 +20,24 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.example.demo.domain.UserResponseDTO;
 
 @RestController
-@SpringBootApplication
 @RequestMapping("/api")
 public class UserController {
 
 	public JSONObject users = new JSONObject();
 
-	public static void main(String[] args) {
-		SpringApplication.run(UserController.class, args);
-	}
-
-	public UserController() {
-		readJson();
-	}
+	@Autowired
+	UserRepository repository;
+//	public UserController() {
+//		readJson();
+//	}
 
 	public void writeJson() {
 		try (FileWriter fw = new FileWriter("Users.json")){
 			fw.write(this.users.toString());
-			fw.close();
-		} catch (IOException e) {
+        } catch (IOException e) {
 			System.err.println("Erro ao escrever no arquivo.");
 		}
 	}
@@ -48,49 +49,35 @@ public class UserController {
 			this.users = new JSONObject();
 		}
 	}
-	
-	@PostMapping("/login")
-    public String login(@RequestBody User user) {
-        if (this.users.has(Long.toString(user.getId()))){
-			return "Erro: usuário já cadastrado.";
-		}
-		JSONObject user_json = new JSONObject();
-		user_json.put("nome", user.getNome());
-		user_json.put("login", user.getLogin());
-		this.users.put(Long.toString(user.getId()), user_json);
-		writeJson();
-		return "Usuário cadastrado com sucesso.";
-    }
-
 
 	@PostMapping("/UserService/users")
 	public String postUser(@RequestBody User user){
-		if (this.users.has(Long.toString(user.getId()))){
+		if (this.users.has(user.getId())){
 			return "Erro: usuário já cadastrado.";
 		}
 		JSONObject user_json = new JSONObject();
-		user_json.put("nome", user.getNome());
 		user_json.put("login", user.getLogin());
-		this.users.put(Long.toString(user.getId()), user_json);
+		this.users.put(user.getId(), user_json);
 		writeJson();
 		return "Usuário cadastrado com sucesso.";
 	}
 
 	@GetMapping("/UserService/users")
-	public String getUsers() {
-		return this.users.toString();			
+	public ResponseEntity getAllUsers() {
+		List<UserResponseDTO> userList = this.repository.findAll().stream().map(UserResponseDTO::new).toList();
+
+		return ResponseEntity.ok(userList);
 	}
 
 	@GetMapping("/UserService/users/{id}")
-	public String getUserByID(@PathVariable("id") Long id) {
-		JSONObject user = this.users.getJSONObject(Long.toString(id));
-		return user.toString();
+	public ResponseEntity getUserByID(@PathVariable("id") String id) {
+		UserResponseDTO user = this.repository.findById(id).stream().map(UserResponseDTO::new).findFirst().get();
+		return ResponseEntity.ok(user);
 	}
 
 	@PutMapping("/UserService/users/{id}")
 	public String putUser(@PathVariable("id") Long id, @RequestBody User user) {
 		JSONObject user_json = new JSONObject();
-		user_json.put("nome", user.getNome());
 		user_json.put("login", user.getLogin());
 		this.users.put(Long.toString(id), user_json);
 		writeJson();
