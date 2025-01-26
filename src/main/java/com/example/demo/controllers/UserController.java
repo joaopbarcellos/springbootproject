@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.domain.UserResponseDTO;
 
+import static com.example.demo.services.EmailValidator.isValidEmail;
+
 @RestController
 @RequestMapping("/api")
 public class UserController {
@@ -52,18 +54,23 @@ public class UserController {
 		}
 
 		User user = new User(body);
-		if (user.getLogin() == null || user.getLogin().trim().isEmpty()) {
-			return ResponseEntity.badRequest().body("Erro: Login deve ser informado");
+		if ((user.getLogin() == null || user.getLogin().trim().isEmpty()) &&
+				(user.getName() == null || user.getName().trim().isEmpty())) {
+			return ResponseEntity.badRequest().body("Erro: Login ou nome deve ser informado");
 		}
-
-		if (user.getName() == null || user.getName().trim().isEmpty()) {
-			return ResponseEntity.badRequest().body("Erro: Nome deve ser informado");
+		if (!isValidEmail(user.getLogin()) && user.getLogin() != null) {
+			return ResponseEntity.badRequest().body("Erro: Email invalido.");
 		}
 
 		User existingUser = repository.findById(id).orElseThrow();
 
-		existingUser.setLogin(user.getLogin());
-		existingUser.setName(user.getName());
+		if (user.getLogin() != null) {
+			existingUser.setLogin(user.getLogin());
+		}
+		if (user.getName() != null) {
+			existingUser.setName(user.getName());
+		}
+
 		repository.save(existingUser);
 
 		// Lembrar de fazer uma nova requisição de Login
