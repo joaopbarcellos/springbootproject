@@ -1,0 +1,12 @@
+Relatório sobre o desenvolvimento do aplicação:
+
+O primeiro passo da aplicação foi conhecer a linguagem e framework. Foi um grande desafio compreender e configurar
+a biblioteca SpringSecurity.
+
+Após estudar sobre as ferramentas que serão utilizadas, o próximo passo foi estruturar as principais classes, como o
+UserController ou a classe de User.
+
+Depois foi a configuração personalizada do SpringSecurity para, assim, a aplicação ficar segura com os endpoints.
+
+Por fim, por uma escolha própria, foi instalado o Flyway para fazer migrations de banco de dados, além de colocar em um
+docker compose a aplicação, com um container rodando o banco do PostgreSQL.
