@@ -42,6 +42,14 @@ public class User implements UserDetails {
         this.name = data.name();
     }
 
+    public User(UserDTO data) {
+        this.setId(data.id());
+        this.login = data.login();
+        this.name = data.name();
+        this.password = data.password();
+        this.role = data.role();
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if(this.role == UserRole.ADMIN) return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"));
@@ -73,7 +81,4 @@ public class User implements UserDetails {
         return true;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
 }

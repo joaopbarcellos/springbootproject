@@ -2,12 +2,17 @@ package com.example.demo.controllers;
 
 import java.util.List;
 
+import com.example.demo.domain.LoginResponseDTO;
 import com.example.demo.domain.User;
 import com.example.demo.domain.UserRequestDTO;
+import com.example.demo.infra.security.TokenService;
 import com.example.demo.repositories.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +30,11 @@ public class UserController {
 
 	final
 	UserRepository repository;
+	@Autowired
+	private AuthenticationManager authenticationManager;
+
+	@Autowired
+	private TokenService tokenService;
 
 	@Autowired
 	public UserController(UserRepository repository) {
@@ -48,7 +58,7 @@ public class UserController {
 	}
 
 	@PutMapping("/UserService/users/{id}")
-	public ResponseEntity<String> putUser(@PathVariable("id") String id, @RequestBody @Valid UserRequestDTO body) {
+	public ResponseEntity<?> putUser(@PathVariable("id") String id, @RequestBody @Valid UserRequestDTO body) {
 		if (!repository.existsById(id)) {
 			return ResponseEntity.status(404).body("Erro: Usuário não encontrado.");
 		}
@@ -72,9 +82,12 @@ public class UserController {
 		}
 
 		repository.save(existingUser);
+		var authentication = new UsernamePasswordAuthenticationToken(existingUser, null, existingUser.getAuthorities());
+		SecurityContextHolder.getContext().setAuthentication(authentication);
 
-		// Lembrar de fazer uma nova requisição de Login
-		return ResponseEntity.ok("Usuário atualizado com sucesso.");
+		// ✅ Generate a new token for the updated user
+		var token = tokenService.generateToken(existingUser);
+		return ResponseEntity.ok(new LoginResponseDTO(token));
 	}
 
 	@DeleteMapping("/UserService/users/{id}")
