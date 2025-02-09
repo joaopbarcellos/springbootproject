@@ -8,6 +8,7 @@ import com.example.demo.domain.UserRequestDTO;
 import com.example.demo.infra.security.TokenService;
 import com.example.demo.repositories.UserRepository;
 import jakarta.validation.Valid;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -33,7 +34,8 @@ public class UserController {
 	@Autowired
 	private AuthenticationManager authenticationManager;
 
-	@Autowired
+	@Setter
+    @Autowired
 	private TokenService tokenService;
 
 	@Autowired
@@ -99,4 +101,5 @@ public class UserController {
 		repository.deleteById(id);
 		return ResponseEntity.ok("Usuário deletado com sucesso.");
 	}
+
 }
